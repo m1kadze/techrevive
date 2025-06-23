@@ -1,2 +1,5 @@
-Flask[async]==2.3.3
-aiosqlite==0.17.0
+Flask[async]==3.0.3
+aiosqlite==0.20.0
+reportlab==4.2.2
+python-telegram-bot==21.4
+requests==2.32.3
