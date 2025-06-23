@@ -1,0 +1,108 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Завершение записи - TechRevive{% endblock %}
+
+{% block content %}
+<style>
+    .glass-card {
+        background: rgba(30, 30, 30, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
+<script>
+    function updateBrands() {
+        const deviceType = document.getElementById('device_type').value;
+        fetch(`/admin/get_brands/${deviceType}`)
+            .then(response => response.json())
+            .then(brands => {
+                const brandSelect = document.getElementById('device_brand');
+                brandSelect.innerHTML = '<option value="">Выберите бренд</option>';
+                brands.forEach(brand => {
+                    brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
+                });
+                document.getElementById('custom_brand').style.display = deviceType === 'Своё' ? 'block' : 'none';
+                updateModels();
+            });
+    }
+
+    function updateModels() {
+        const brand = document.getElementById('device_brand').value;
+        if (brand && brand !== 'Своё') {
+            fetch(`/admin/get_models/${brand}`)
+                .then(response => response.json())
+                .then(models => {
+                    const modelSelect = document.getElementById('device_model');
+                    modelSelect.innerHTML = '<option value="">Выберите модель</option>';
+                    models.forEach(model => {
+                        modelSelect.innerHTML += `<option value="${model}">${model}</option>`;
+                    });
+                });
+        }
+        document.getElementById('custom_model').style.display = brand === 'Своё' ? 'block' : 'none';
+    }
+</script>
+<section class="py-20 relative">
+    <div class="container mx-auto px-4">
+        <div class="glass-card p-8">
+            <h2 class="text-3xl font-bold mb-6">Завершение записи (ID: {{ appointment['id'] }})</h2>
+            <form method="POST" action="{{ url_for('complete_appointment', appointment_id=appointment['id']) }}">
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Имя клиента</label>
+                    <input type="text" value="{{ appointment['name'] }}" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4" readonly>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Телефон</label>
+                    <input type="text" value="{{ appointment['phone'] }}" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4" readonly>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Сервисный центр</label>
+                    <input type="text" value="{{ appointment['service_center'] }}" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4" readonly>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Дата и время</label>
+                    <input type="text" value="{{ appointment['date'] }} {{ appointment['time'] }}" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4" readonly>
+                </div>
+                <div class="mb-4">
+                    <label for="device_type" class="block text-gray-300 mb-2">Тип устройства</label>
+                    <select id="device_type" name="device_type" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4" onchange="updateBrands()" required>
+                        <option value="">Выберите тип</option>
+                        {% for type in device_types %}
+                            <option value="{{ type }}">{{ type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="device_brand" class="block text-gray-300 mb-2">Бренд</label>
+                    <select id="device_brand" name="device_brand" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4" onchange="updateModels()">
+                        <option value="">Выберите бренд</option>
+                    </select>
+                    <input type="text" id="custom_brand" name="custom_brand" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4 mt-2" style="display: none;" placeholder="Введите свой бренд">
+                </div>
+                <div class="mb-4">
+                    <label for="device_model" class="block text-gray-300 mb-2">Модель</label>
+                    <select id="device_model" name="device_model" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4">
+                        <option value="">Выберите модель</option>
+                    </select>
+                    <input type="text" id="custom_model" name="custom_model" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4 mt-2" style="display: none;" placeholder="Введите свою модель">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300 mb-2">Выполненные работы</label>
+                    {% for service in services %}
+                        <div class="mb-2">
+                            <input type="checkbox" name="services" value="{{ service['name'] }}" id="service_{{ service['id'] }}">
+                            <label for="service_{{ service['id'] }}">{{ service['name'] }} ({{ service['price'] }}₽)</label>
+                        </div>
+                    {% endfor %}
+                    <input type="text" name="custom_service" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4 mt-2" placeholder="Добавить свою работу">
+                </div>
+                <button type="submit" class="bg-primary text-black font-bold py-3 px-6 rounded-lg w-full transition-all duration-300 transform hover:scale-[1.02]">
+                    Завершить и создать PDF
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

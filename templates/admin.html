@@ -1,0 +1,120 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Админ-панель - TechRevive{% endblock %}
+
+{% block content %}
+<style>
+    .glass-card {
+        background: rgba(30, 30, 30, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .table-container {
+        overflow-x: auto;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    th {
+        background: rgba(0, 255, 209, 0.1);
+        color: #00FFD1;
+    }
+    tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .filter-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+</style>
+<section class="py-20 relative">
+    <div class="container mx-auto px-4">
+        <div class="glass-card p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Записи на диагностику</h2>
+                <div>
+                    <a href="{{ url_for('view_completed') }}" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-all duration-300 mr-2">
+                        Просмотреть завершенные
+                    </a>
+                    <a href="{{ url_for('admin_logout') }}" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-all duration-300">
+                        Выйти
+                    </a>
+                </div>
+            </div>
+            <form class="filter-form mb-6">
+                <select name="status" class="bg-dark-card border border-gray-700 rounded-lg py-2 px-4">
+                    <option value="">Все статусы</option>
+                    <option value="confirmed" {% if status == 'confirmed' %}selected{% endif %}>Подтверждено</option>
+                    <option value="accepted" {% if status == 'accepted' %}selected{% endif %}>Принято</option>
+                </select>
+                <select name="service_center" class="bg-dark-card border border-gray-700 rounded-lg py-2 px-4">
+                    <option value="">Все центры</option>
+                    {% for center in service_centers %}
+                        <option value="{{ center }}" {% if service_center == center %}selected{% endif %}>{{ center }}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" name="date" value="{{ date }}" class="bg-dark-card border border-gray-700 rounded-lg py-2 px-4">
+                <select name="sort_by" class="bg-dark-card border border-gray-700 rounded-lg py-2 px-4">
+                    <option value="id" {% if sort_by == 'id' %}selected{% endif %}>ID</option>
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Имя</option>
+                    <option value="phone" {% if sort_by == 'phone' %}selected{% endif %}>Телефон</option>
+                    <option value="date" {% if sort_by == 'date' %}selected{% endif %}>Дата</option>
+                    <option value="time" {% if sort_by == 'time' %}selected{% endif %}>Время</option>
+                </select>
+                <select name="sort_order" class="bg-dark-card border border-gray-700 rounded-lg py-2 px-4">
+                    <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>По возрастанию</option>
+                    <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>По убыванию</option>
+                </select>
+                <button type="submit" class="bg-primary text-black font-bold py-2 px-4 rounded-lg">Фильтровать</button>
+            </form>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Имя</th>
+                            <th>Телефон</th>
+                            <th>Сервисный центр</th>
+                            <th>Дата</th>
+                            <th>Время</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                            <tr>
+                                <td>{{ appointment['id'] }}</td>
+                                <td>{{ appointment['name'] }}</td>
+                                <td>{{ appointment['phone'] }}</td>
+                                <td>{{ appointment['service_center'] }}</td>
+                                <td>{{ appointment['date'] }}</td>
+                                <td>{{ appointment['time'] }}</td>
+                                <td>{{ appointment['status'] }}</td>
+                                <td>
+                                    {% if appointment['status'] == 'confirmed' %}
+                                        <a href="{{ url_for('accept_appointment', appointment_id=appointment['id']) }}" class="bg-green-500 text-white py-1 px-2 rounded hover:bg-green-600">Принять</a>
+                                        <a href="{{ url_for('reject_appointment', appointment_id=appointment['id']) }}" class="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600">Отклонить</a>
+                                    {% elif appointment['status'] == 'accepted' %}
+                                        <a href="{{ url_for('complete_appointment', appointment_id=appointment['id']) }}" class="bg-blue-500 text-white py-1 px-2 rounded hover:bg-blue-600">Завершить</a>
+                                        <a href="{{ url_for('reject_appointment', appointment_id=appointment['id']) }}" class="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600">Отклонить</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

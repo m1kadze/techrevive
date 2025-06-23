@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}TechRevive - Главная{% endblock %}
+
+{% block content %}
+<style>
+    .glass-card {
+        background: rgba(30, 30, 30, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .stats-counter {
+        font-variant-numeric: tabular-nums;
+    }
+    
+    .fade-in {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    
+    .fade-in.appear {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .partner-logo {
+        filter: grayscale(1) brightness(0.5);
+        transition: all 0.3s ease;
+    }
+    
+    .partner-logo:hover {
+        filter: grayscale(0) brightness(1);
+        transform: scale(1.05);
+    }
+    
+    .social-icon:hover {
+        color: #00FFD1 !important;
+        transform: translateY(-3px);
+    }
+    
+    #video-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+        opacity: 0.3;
+    }
+    
+    .glow {
+        text-shadow: 0 0 10px rgba(0, 255, 209, 0.7);
+    }
+    
+    .carousel-item {
+        max-width: 350px;
+        transition: all 0.5s ease;
+        flex: 0 0 80%;
+        margin: 0 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 300px;
+    }
+
+    .carousel-track {
+        max-width: 700px;
+        display: flex;
+        transition: transform 0.5s ease;
+    }
+
+    .carousel-container {
+        max-width: 97%;
+        overflow: hidden;
+        position: relative;
+        margin: 0 auto;
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Стили для модального окна */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .modal.active {
+        display: flex;
+        opacity: 1;
+    }
+    
+    .modal-content {
+        background: rgba(30, 30, 30, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        max-width: 500px;
+        width: 90%;
+        padding: 24px;
+        text-align: center;
+        position: relative;
+        animation: slideIn 0.3s ease;
+    }
+    
+    .modal-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 24px;
+        color: #fff;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+    
+    .modal-close:hover {
+        color: #00FFD1;
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .cta-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #00FFD1;
+        color: black;
+        font-weight: bold;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+    }
+
+    .cta-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(0, 255, 209, 0.5);
+    }
+
+    .cta-button i {
+        margin-right: 8px;
+    }
+</style>
+
+<!-- Модальное окно -->
+<div id="appointmentModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close">×</span>
+        <h2 class="text-2xl font-bold mb-4">
+            Запись на <span class="text-primary">диагностику</span>
+        </h2>
+        <p class="text-gray-300 mb-6">
+            Запишитесь на бесплатную диагностику вашего устройства и получите скидку 15% на ремонт. Свяжитесь с нами через Telegram!
+        </p>
+        <a href="https://t.me/techrevive_bot" target="_blank" class="cta-button">
+            <i class="fab fa-telegram-plane"></i>
+            Связаться через Telegram
+        </a>
+    </div>
+</div>
+
+<video id="video-background" autoplay muted loop>
+    <source src="https://assets.mixkit.co/videos/11437/11437-720.mp4" type="video/mp4">
+</video>
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden px-4 md:px-8">
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/70 to-black z-0"></div>
+    <div class="container mx-auto relative z-10 text-center">
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+            Возвращаем <span class="text-primary glow">технику</span> к жизни
+        </h1>
+        <p class="text-xl md:text-2xl mb-12 max-w-3xl mx-auto text-gray-300">
+            Экспертный ремонт, обслуживание и диагностика всех ваших электронных устройств
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ url_for('catalog') }}" class="bg-primary hover:bg-opacity-90 text-black font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105">
+                Наши услуги
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="py-20 relative">
+    <div class="absolute inset-0 bg-black/50 z-0"></div>
+    <div class="container mx-auto relative z-10">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="glass-card fade-in p-8 text-center">
+                <div class="text-5xl md:text-6xl font-bold text-primary stats-counter" data-target="12341">0</div>
+                <p class="text-xl mt-4">Отремонтированных устройств</p>
+                <div class="flex justify-center mt-4">
+                    <i class="fas fa-mobile-alt text-3xl text-gray-400"></i>
+                    <i class="fas fa-laptop mx-6 text-3xl text-gray-400"></i>
+                    <i class="fas fa-tablet-alt text-3xl text-gray-400"></i>
+                </div>
+            </div>
+            <div class="glass-card fade-in p-8 text-center delay-200">
+                <div class="text-5xl md:text-6xl font-bold text-primary stats-counter" data-target="24">0</div>
+                <p class="text-xl mt-4">Сертифицированных специалистов</p>
+                <div class="flex justify-center mt-4">
+                    <i class="fas fa-user-graduate text-3xl text-gray-400"></i>
+                    <i class="fas fa-certificate mx-6 text-3xl text-gray-400"></i>
+                    <i class="fas fa-tools text-3xl text-gray-400"></i>
+                </div>
+            </div>
+            <div class="glass-card fade-in p-8 text-center delay-400">
+                <div class="text-5xl md:text-6xl font-bold text-primary stats-counter" data-target="99">0</div>
+                <p class="text-xl mt-4">Уровень удовлетворенности</p>
+                <div class="flex justify-center mt-4">
+                    <i class="fas fa-star text-3xl text-gray-400"></i>
+                    <i class="fas fa-smile mx-6 text-3xl text-gray-400"></i>
+                    <i class="fas fa-award text-3xl text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-20 overflow-hidden relative">
+    <svg aria-hidden="true" class="pointer-events-none absolute inset-0 h-full w-full fill-gray-400/20 stroke-gray-600 -z-[1] [mask-image:radial-gradient(900px_circle_at_center,white,transparent)]">
+        <defs>
+            <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse" x="-1" y="-1">
+                <path d="M.5 40V.5H40" fill="none" stroke-dasharray="4 2"></path>
+            </pattern>
+        </defs>
+        <rect width="100%" height="100%" stroke-width="0" fill="url(#grid-pattern)"></rect>
+    </svg>
+    <div class="container mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold text-center mb-16">Типичные решения для ремонта</h2>
+        <div class="relative">
+            <div class="carousel-container overflow-hidden">
+                <div class="carousel-track flex">
+                    {% for service in [
+                        {'icon': 'fa-battery-quarter', 'name': 'Замена батареи', 'symptoms': ['Устройство не держит заряд', 'Быстрый разряд батареи', 'Неожиданные выключения']},
+                        {'icon': 'fa-tint', 'name': 'Ремонт после попадания жидкости', 'symptoms': ['Контакт с водой', 'Коррозия портов', 'Неисправные компоненты']},
+                        {'icon': 'fa-tv', 'name': 'Замена экрана', 'symptoms': ['Треснувшее или разбитое стекло', 'Нереагирующий сенсор', 'Искажение цвета дисплея']},
+                        {'icon': 'fa-microchip', 'name': 'Ремонт материнской платы', 'symptoms': ['Устройство не включается', 'Сбои в работе системы', 'Перегрев компонентов']},
+                        {'icon': 'fa-plug', 'name': 'Замена разъема питания', 'symptoms': ['Не заряжается устройство', 'Шатающийся порт зарядки', 'Периодическое отключение']},
+                        {'icon': 'fa-camera', 'name': 'Ремонт камеры', 'symptoms': ['Размытые или темные фото', 'Не работает автофокус', 'Ошибки приложения камеры']}
+                    ] %}
+                        <div class="carousel-item glass-card p-6 transition-all duration-500">
+                            <div class="text-center mb-6">
+                                <i class="fas {{ service.icon }} text-5xl text-primary"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4">{{ service.name }}</h3>
+                            <ul class="text-gray-300 space-y-2 mb-6 text-sm">
+                                {% for symptom in service.symptoms %}
+                                    <li class="flex items-center">
+                                        <i class="fas fa-check-circle text-primary mr-2"></i>
+                                        {{ symptom }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <a href="#" class="open-modal-btn text-primary hover:text-primary/80 font-medium inline-flex items-center text-sm">
+                                Записаться <i class="fas fa-arrow-right ml-2"></i>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <button id="carousel-prev" class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-primary rounded-full p-3 -ml-8 transition-all duration-300">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button id="carousel-next" class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black/50 hover:bg-primary rounded-full p-3 -mr-8 transition-all duration-300">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</section>
+
+<section class="py-20 bg-black/40">
+    <div class="container mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold text-center mb-16">Нам доверяют лидеры индустрии</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center">
+            <div class="partner-logo flex justify-center">
+                <i class="fab fa-apple text-5xl opacity-70"></i>
+            </div>
+            <div class="partner-logo flex justify-center">
+                <i class="fab fa-microsoft text-5xl opacity-70"></i>
+            </div>
+            <div class="partner-logo flex justify-center">
+                <i class="fab fa-playstation text-5xl opacity-70"></i>
+            </div>
+            <div class="partner-logo flex justify-center">
+                <i class="fab fa-google text-5xl opacity-70"></i>
+            </div>
+            <div class="partner-logo flex justify-center">
+                <i class="fab fa-meta text-5xl opacity-70"></i>
+            </div>
+            <div class="partner-logo flex justify-center">
+                <i class="fab fa-xbox text-5xl opacity-70"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Управление модальным окном
+    const modal = document.getElementById('appointmentModal');
+    const openModalButtons = document.querySelectorAll('.open-modal-btn');
+    const closeModalBtn = document.querySelector('.modal-close');
+
+    openModalButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            modal.classList.add('active');
+        });
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+        }
+    });
+
+    // Scroll Reveal Animation
+    const fadeElements = document.querySelectorAll('.fade-in');
+    
+    const appearOptions = {
+        threshold: 0.15,
+        rootMargin: "0px 0px -100px 0px"
+    };
+    
+    const appearOnScroll = new IntersectionObserver(function(entries, appearOnScroll) {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('appear');
+            appearOnScroll.unobserve(entry.target);
+        });
+    }, appearOptions);
+    
+    fadeElements.forEach(element => {
+        appearOnScroll.observe(element);
+    });
+    
+    // Counter Animation for Stats
+    const counters = document.querySelectorAll('.stats-counter');
+    counters.forEach(counter => {
+        const target = +counter.getAttribute('data-target');
+        const duration = 2000;
+        const increment = target / (duration / 16);
+        let current = 0;
+        
+        const updateCounter = () => {
+            current += increment;
+            if (current < target) {
+                counter.textContent = Math.ceil(current).toLocaleString();
+                requestAnimationFrame(updateCounter);
+            } else {
+                counter.textContent = target.toLocaleString();
+            }
+        };
+        
+        // Only trigger when in viewport
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                updateCounter();
+                observer.disconnect();
+            }
+        }, { threshold: 0.1 });
+        
+        observer.observe(counter);
+    });
+    
+    // Carousel Functionality
+    const track = document.querySelector('.carousel-track');
+    const items = document.querySelectorAll('.carousel-item');
+    const nextBtn = document.getElementById('carousel-next');
+    const prevBtn = document.getElementById('carousel-prev');
+    
+    if (items.length > 0) {
+        let currentIndex = 0;
+        const totalItems = items.length;
+        const maxIndex = totalItems - 4;
+        
+        // Disable buttons when at edges
+        function updateButtonStates() {
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = currentIndex === maxIndex;
+            prevBtn.classList.toggle('opacity-50', currentIndex === 0);
+            nextBtn.classList.toggle('opacity-50', currentIndex === maxIndex);
+        }
+        
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < maxIndex) {
+                currentIndex++;
+                updateCarousel();
+            }
+        });
+        
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCarousel();
+            }
+        });
+        
+        function updateCarousel() {
+            // Calculate the translation based on item width and margins
+            const itemWidth = items[0].getBoundingClientRect().width + 20; // Including margins
+            track.style.transform = `translateX(-${currentIndex * itemWidth}px)`;
+            
+            updateButtonStates();
+        }
+        
+        // Initialize
+        updateCarousel();
+        
+        // Handle window resize
+        window.addEventListener('resize', updateCarousel);
+    }
+});
+</script>
+{% endblock %}

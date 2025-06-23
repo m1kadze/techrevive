@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+
+{% block title %}TechRevive - Услуги{% endblock %}
+
+{% block content %}
+<style>
+    .glass-card {
+        background: rgba(30, 30, 30, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .fault-card {
+        transition: all 0.4s ease;
+        cursor: pointer;
+        perspective: 1000px;
+        transform-style: preserve-3d;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .fault-card:hover {
+        transform: translateY(-10px) rotateX(3deg) rotateY(1deg);
+        border-color: rgba(0, 255, 209, 0.3);
+        box-shadow: 0 10px 30px -10px rgba(0, 255, 209, 0.2);
+    }
+    
+    .fault-card.glow {
+        animation: glow 2s infinite alternate;
+    }
+    
+    @keyframes glow {
+        from {
+            box-shadow: 0 0 10px rgba(0, 255, 209, 0.1);
+        }
+        to {
+            box-shadow: 0 0 20px rgba(0, 255, 209, 0.3);
+        }
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .modal.active {
+        display: flex;
+        opacity: 1;
+    }
+    
+    .modal-content {
+        background: rgba(30, 30, 30, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        max-width: 600px;
+        width: 90%;
+        padding: 24px;
+        text-align: left;
+        position: relative;
+        animation: slideIn 0.3s ease;
+    }
+    
+    .modal-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 24px;
+        color: #fff;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+    
+    .modal-close:hover {
+        color: #00FFD1;
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .cta-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #00FFD1;
+        color: black;
+        font-weight: bold;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+    }
+
+    .cta-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(0, 255, 209, 0.5);
+    }
+
+    .cta-button i {
+        margin-right: 8px;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        color: #fff;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #00FFD1;
+        box-shadow: 0 0 5px rgba(0, 255, 209, 0.5);
+    }
+
+    .step {
+        display: none;
+    }
+
+    .step.active {
+        display: block;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .option-button {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .option-button:hover {
+        border-color: #00FFD1;
+        background: rgba(0, 255, 209, 0.1);
+    }
+</style>
+
+<section class="pt-24 pb-16 relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-black/80 to-black z-0"></div>
+    <svg aria-hidden="true" class="pointer-events-none absolute inset-0 h-full w-full fill-gray-400/20 stroke-gray-600 -z-[1] [mask-image:radial-gradient(900px_circle_at_center,white,transparent)]">
+        <defs>
+            <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse" x="-1" y="-1">
+                <path d="M.5 40V.5H40" fill="none" stroke-dasharray="4 2"></path>
+            </pattern>
+        </defs>
+        <rect width="100%" height="100%" stroke-width="0" fill="url(#grid-pattern)"></rect>
+    </svg>
+    <div class="container mx-auto relative z-10">
+        <div class="max-w-4xl mx-auto text-center px-4">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6">
+                <span class="text-primary">Каталог</span> ремонтных услуг
+            </h1>
+            <p class="text-xl text-gray-300 mb-8">
+                Возможные типы неисправностей ваших устройств с детальным описанием, симптомами и стоимостью ремонта
+            </p>
+            <div class="inline-flex items-center glass-card px-6 py-3 rounded-full mb-12">
+                <i class="fas fa-tools text-primary mr-3"></i>
+                <span>Более 80+ видов ремонта</span>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mt-16">
+            <div class="glass-card feature-pulse p-6 text-center">
+                <div class="text-4xl font-bold text-primary mb-2">120+</div>
+                <p class="text-gray-300">устройств поддерживаются</p>
+            </div>
+            <div class="glass-card feature-pulse p-6 text-center">
+                <div class="text-4xl font-bold text-primary mb-2">98%</div>
+                <p class="text-gray-300">успешных ремонтов</p>
+            </div>
+            <div class="glass-card feature-pulse p-6 text-center">
+                <div class="text-4xl font-bold text-primary mb-2">24/7</div>
+                <p class="text-gray-300">консультации</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-12 relative">
+    <div class="container mx-auto px-4">
+        <div class="flex flex-wrap items-center justify-between mb-8">
+            <h2 class="text-3xl font-bold">Примеры наших услуг</h2>
+            <p class="text-gray-400">Показано <span class="text-primary">{{ services|length }}</span> из 80 услуг</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for service in services %}
+                <div class="fault-card glass-card glow p-6" data-service-id="{{ service['id'] }}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-primary/10 p-3 rounded-lg">
+                            <i class="fas fa-{% if service['name'] == 'Замена аккумулятора' %}battery-quarter{% elif service['name'] == 'Устранение попадания влаги' %}tint{% elif service['name'] == 'Замена экрана' %}tv{% elif service['name'] == 'Ремонт материнской платы' %}microchip{% elif service['name'] == 'Замена разъема зарядки' %}plug{% elif service['name'] == 'Ремонт камеры' %}camera{% elif service['name'] == 'Замена динамика' %}sd-card{% elif service['name'] == 'Ремонт Wi-Fi модуля' %}wifi{% elif service['name'] == 'Замена вибромотора' %}vibration{% elif service['name'] == 'Замена сканера отпечатков' %}fingerprint{% endif %} text-primary text-2xl"></i>
+                        </div>
+                        <div class="bg-primary/20 text-primary font-bold py-1 px-3 rounded text-sm">
+                            от {{ service['price'] }}₽
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">{{ service['name'] }}</h3>
+                    <ul class="mb-6 space-y-2">
+                        {% for symptom in service['symptoms'].split(', ') %}
+                            <li class="text-gray-400 flex items-center">
+                                <i class="fas fa-angle-right text-primary mr-2"></i>
+                                {{ symptom }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <div class="pt-4 border-t border-gray-800">
+                        <div class="flex items-center text-gray-500 text-sm">
+                            <i class="far fa-clock mr-2"></i>
+                            <span>Время ремонта: {{ service['repair_time'] }}</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="max-w-4xl mx-auto text-center px-4 py-6">
+        <p class="text-l text-gray-500">
+            * Больше можно узнать на диагностике
+        </p>
+    </div>
+</section>
+
+<!-- Модальное окно -->
+<div id="appointmentModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close">×</span>
+        <h2 class="text-2xl font-bold mb-4">
+            Запись на <span class="text-primary">диагностику</span>
+        </h2>
+        <div id="step1" class="step active">
+            <p class="text-gray-300 mb-6">Введите ваше имя:</p>
+            <div class="form-group">
+                <input type="text" id="name" placeholder="Ваше имя">
+            </div>
+            <div class="button-group">
+                <button class="cta-button" onclick="nextStep(1)">Далее</button>
+            </div>
+        </div>
+        <div id="step2" class="step">
+            <p class="text-gray-300 mb-6">Введите ваш номер телефона:</p>
+            <div class="form-group">
+                <input type="tel" id="phone" placeholder="Например, +7 999 123-45-67">
+            </div>
+            <div class="button-group">
+                <button class="cta-button" onclick="prevStep(2)">Назад</button>
+                <button class="cta-button" onclick="nextStep(2)">Далее</button>
+            </div>
+        </div>
+        <div id="step3" class="step">
+            <p class="text-gray-300 mb-6">Выберите сервисный центр:</p>
+            <div class="button-group" id="service_centers"></div>
+            <div class="button-group">
+                <button class="cta-button" onclick="prevStep(3)">Назад</button>
+                <button class="cta-button" onclick="nextStep(3)">Далее</button>
+            </div>
+        </div>
+        <div id="step4" class="step">
+            <p class="text-gray-300 mb-6">Выберите дату:</p>
+            <div class="button-group" id="available_dates"></div>
+            <div class="button-group">
+                <button class="cta-button" onclick="prevStep(4)">Назад</button>
+                <button class="cta-button" onclick="nextStep(4)">Далее</button>
+            </div>
+        </div>
+        <div id="step5" class="step">
+            <p class="text-gray-300 mb-6">Выберите время:</p>
+            <div class="button-group" id="available_times"></div>
+            <div class="button-group">
+                <button class="cta-button" onclick="prevStep(5)">Назад</button>
+                <button class="cta-button" onclick="nextStep(5)">Далее</button>
+            </div>
+        </div>
+        <div id="step6" class="step">
+            <p class="text-gray-300 mb-6">Подтвердите запись:</p>
+            <div id="confirmation"></div>
+            <div class="button-group">
+                <button class="cta-button" onclick="cancelAppointment()">Отменить</button>
+                <button class="cta-button" onclick="confirmAppointment()">Подтвердить</button>
+            </div>
+        </div>
+        <p class="text-gray-300 mt-6">
+            Или свяжитесь через Telegram и получите <span class="text-primary">15% скидку</span> на ремонт!
+        </p>
+        <a href="https://t.me/techrevive_bot" target="_blank" class="cta-button">
+            <i class="fab fa-telegram-plane"></i>
+            Связаться через Telegram
+        </a>
+    </div>
+</div>
+
+<script>
+// Определяем регулярное выражение для телефона с экранированием
+const PHONE_REGEX = new RegExp('^\\+?\\d{10,15}$');
+
+let currentStep = 1;
+let appointmentData = {};
+
+// Открытие/закрытие модального окна
+const modal = document.getElementById('appointmentModal');
+const openModalButtons = document.querySelectorAll('.fault-card, .open-modal-btn');
+const closeModalBtn = document.querySelector('.modal-close');
+
+openModalButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        modal.classList.add('active');
+        currentStep = 1;
+        appointmentData = {};
+        showStep(currentStep);
+    });
+});
+
+closeModalBtn.addEventListener('click', () => {
+    modal.classList.remove('active');
+});
+
+window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+        modal.classList.remove('active');
+    }
+});
+
+// Показать шаг
+function showStep(step) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`step${step}`).classList.add('active');
+    if (step === 3) loadServiceCenters();
+    if (step === 4) loadAvailableDates();
+    if (step === 5) loadAvailableTimes();
+    if (step === 6) showConfirmation();
+}
+
+// Переход к следующему/предыдущему шагу
+async function nextStep(step) {
+    if (step === 1) {
+        const name = document.getElementById('name').value;
+        if (!name.trim()) {
+            alert('Введите ваше имя');
+            return;
+        }
+        appointmentData.name = name;
+    } else if (step === 2) {
+        const phone = document.getElementById('phone').value;
+        if (!PHONE_REGEX.test(phone)) {
+            alert('Введите корректный номер телефона (10-15 цифр, возможно с +)');
+            return;
+        }
+        appointmentData.phone = phone;
+    } else if (step === 3) {
+        if (!appointmentData.service_center) {
+            alert('Выберите сервисный центр');
+            return;
+        }
+    } else if (step === 4) {
+        if (!appointmentData.date) {
+            alert('Выберите дату');
+            return;
+        }
+    } else if (step === 5) {
+        if (!appointmentData.time) {
+            alert('Выберите время');
+            return;
+        }
+    }
+    currentStep = currentStep + 1;
+    showStep(currentStep);
+}
+
+function prevStep(step) {
+    currentStep = currentStep - 1;
+    showStep(currentStep);
+}
+
+// Загрузка сервисных центров
+function loadServiceCenters() {
+    const serviceCenters = {{ service_centers|tojson|safe }};
+    const container = document.getElementById('service_centers');
+    container.innerHTML = '';
+    serviceCenters.forEach((center, index) => {
+        const button = document.createElement('button');
+        button.className = 'option-button';
+        button.textContent = center;
+        button.onclick = () => {
+            appointmentData.service_center = center;
+            button.style.background = 'rgba(0, 255, 209, 0.2)';
+            setTimeout(() => nextStep(3), 200);
+        };
+        container.appendChild(button);
+    });
+}
+
+// Загрузка доступных дат
+async function loadAvailableDates() {
+    const response = await fetch('/get_available_dates');
+    const dates = await response.json();
+    const container = document.getElementById('available_dates');
+    container.innerHTML = '';
+    dates.forEach(date => {
+        const button = document.createElement('button');
+        button.className = 'option-button';
+        button.textContent = date;
+        button.onclick = () => {
+            appointmentData.date = date;
+            button.style.background = 'rgba(0, 255, 209, 0.2)';
+            setTimeout(() => nextStep(4), 200);
+        };
+        container.appendChild(button);
+    });
+}
+
+// Загрузка доступных временных слотов
+async function loadAvailableTimes() {
+    const response = await fetch(`/get_available_times/${appointmentData.date}`);
+    const times = await response.json();
+    const container = document.getElementById('available_times');
+    container.innerHTML = '';
+    if (times.length === 0) {
+        container.innerHTML = '<p class="text-gray-300">Нет доступных слотов. Выберите другую дату.</p>';
+        return;
+    }
+    times.forEach(time => {
+        const button = document.createElement('button');
+        button.className = 'option-button';
+        button.textContent = time;
+        button.onclick = () => {
+            appointmentData.time = time;
+            button.style.background = 'rgba(0, 255, 209, 0.2)';
+            setTimeout(() => nextStep(5), 200);
+        };
+        container.appendChild(button);
+    });
+}
+
+// Показ подтверждения
+function showConfirmation() {
+    const container = document.getElementById('confirmation');
+    container.innerHTML = `
+        <p><strong>Имя:</strong> ${appointmentData.name}</p>
+        <p><strong>Телефон:</strong> ${appointmentData.phone}</p>
+        <p><strong>Сервисный центр:</strong> ${appointmentData.service_center}</p>
+        <p><strong>Дата:</strong> ${appointmentData.date}</p>
+        <p><strong>Время:</strong> ${appointmentData.time}</p>
+    `;
+}
+
+// Подтверждение записи
+async function confirmAppointment() {
+    const response = await fetch('/book_appointment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appointmentData)
+    });
+    const result = await response.json();
+    if (result.status === 'success') {
+        alert(`Запись подтверждена! ID: ${result.appointment_id}`);
+        modal.classList.remove('active');
+    } else {
+        alert('Ошибка: ' + result.message);
+    }
+}
+
+// Отмена записи
+function cancelAppointment() {
+    modal.classList.remove('active');
+    appointmentData = {};
+    currentStep = 1;
+}
+
+// Анимация карточек
+document.querySelectorAll('.fault-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const angleX = (centerY - y) / 25;
+        const angleY = (x - centerX) / 25;
+        card.style.transform = `perspective(1000px) rotateX(${angleX}deg) rotateY(${angleY}deg) translateY(-10px)`;
+    });
+    card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+        card.classList.add('glow');
+    });
+    card.addEventListener('mouseenter', () => {
+        card.classList.remove('glow');
+    });
+});
+</script>
+{% endblock %}

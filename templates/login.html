@@ -1,0 +1,36 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Вход в админ-панель - TechRevive{% endblock %}
+
+{% block content %}
+<style>
+    .glass-card {
+        background: rgba(30, 30, 30, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
+<div class="flex items-center justify-center min-h-screen">
+    <div class="glass-card p-8 max-w-md w-full">
+        <h2 class="text-3xl font-bold text-center mb-6">Вход в админ-панель</h2>
+        {% if error %}
+            <p class="text-red-500 text-center mb-4">{{ error }}</p>
+        {% endif %}
+        <form method="POST" action="{{ url_for('admin_login') }}">
+            <div class="mb-4">
+                <label for="login" class="block text-gray-300 mb-2">Логин</label>
+                <input type="text" id="login" name="login" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4 focus:border-primary focus:outline-none" required>
+            </div>
+            <div class="mb-6">
+                <label for="password" class="block text-gray-300 mb-2">Пароль</label>
+                <input type="password" id="password" name="password" class="w-full bg-dark-card border border-gray-700 rounded-lg py-3 px-4 focus:border-primary focus:outline-none" required>
+            </div>
+            <button type="submit" class="bg-primary text-black font-bold py-3 px-6 rounded-lg w-full transition-all duration-300 transform hover:scale-[1.02]">
+                Войти
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

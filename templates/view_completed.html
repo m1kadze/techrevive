@@ -1,0 +1,90 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Завершенные записи - TechRevive{% endblock %}
+
+{% block content %}
+<style>
+    .glass-card {
+        background: rgba(30, 30, 30, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .table-container {
+        overflow-x: auto;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    th {
+        background: rgba(0, 255, 209, 0.1);
+        color: #00FFD1;
+    }
+    tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+</style>
+<section class="py-20 relative">
+    <div class="container mx-auto px-4">
+        <div class="glass-card p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">Завершенные записи</h2>
+                <a href="{{ url_for('admin_panel') }}" class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-all duration-300">
+                    Вернуться к записям
+                </a>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Имя</th>
+                            <th>Телефон</th>
+                            <th>Сервисный центр</th>
+                            <th>Дата</th>
+                            <th>Время</th>
+                            <th>Устройство</th>
+                            <th>Бренд</th>
+                            <th>Модель</th>
+                            <th>Работы</th>
+                            <th>PDF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appt in completed_appointments %}
+                            <tr>
+                                <td>{{ appt['id'] }}</td>
+                                <td>{{ appt['name'] }}</td>
+                                <td>{{ appt['phone'] }}</td>
+                                <td>{{ appt['service_center'] }}</td>
+                                <td>{{ appt['date'] }}</td>
+                                <td>{{ appt['time'] }}</td>
+                                <td>{{ appt['device_type'] }}</td>
+                                <td>{{ appt['device_brand'] }}</td>
+                                <td>{{ appt['device_model'] }}</td>
+                                <td>
+                                    {% for service in appt['services_performed'] %}
+                                        {% if service %}
+                                            {{ service }}<br>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('download_pdf', completed_id=appt['id']) }}" class="bg-blue-500 text-white py-1 px-2 rounded hover:bg-blue-600">Скачать</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

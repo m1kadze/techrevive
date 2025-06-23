@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+{% block title %}TechRevive - О нас{% endblock %}
+
+{% block content %}
+<!-- Подключение Leaflet CSS и JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+    .glass-card {
+        background: rgba(30, 30, 30, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .map-container {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(0, 255, 209, 0.3);
+        box-shadow: 0 0 15px rgba(0, 255, 209, 0.2);
+        position: relative;
+        height: 500px;
+    }
+    
+    .team-member {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .team-member:hover {
+        transform: translateY(-8px);
+    }
+    
+    .team-overlay {
+        position: absolute;
+        bottom: -100%;
+        left: 0;
+        right: 0;
+        background: rgba(30, 30, 30, 0.95);
+        transition: all 0.4s ease;
+        padding: 20px;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+    
+    .team-member:hover .team-overlay {
+        bottom: 0;
+    }
+    
+    .feature-box {
+        animation: pulse-slow 4s infinite;
+    }
+    
+    .feature-pulse {
+        animation: pulse-slow 4s infinite;
+    }
+    
+    .history-item:last-child .history-marker::after {
+        display: none;
+    }
+
+    @keyframes pulse-slow {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.03); opacity: 0.9; }
+    }
+    
+    .company-value-item {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .company-value-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 0;
+        background: #00FFD1;
+        transition: height 0.5s ease;
+    }
+    
+    .company-value-item:hover::before {
+        height: 100%;
+    }
+    
+    .map-info-window {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+
+    .team-member .profile-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .leaflet-popup-content {
+        color: #333;
+        font-size: 14px;
+    }
+
+    .leaflet-popup-content-wrapper {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+    }
+
+    .cta-section {
+        text-align: center;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .cta-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #00FFD1;
+        color: black;
+        font-weight: bold;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+    }
+
+    .cta-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(0, 255, 209, 0.5);
+    }
+
+    .cta-button i {
+        margin-right: 8px;
+    }
+
+    /* Стили для модального окна */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: rgba(30, 30, 30, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        max-width: 500px;
+        width: 90%;
+        padding: 24px;
+        text-align: center;
+        position: relative;
+        animation: slideIn 0.3s ease;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 24px;
+        color: #fff;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .modal-close:hover {
+        color: #00FFD1;
+    }
+
+    @keyframes slideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+
+<!-- Модальное окно -->
+<div id="appointmentModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2 class="text-2xl font-bold mb-4">
+            Запись на <span class="text-primary">диагностику</span>
+        </h2>
+        <p class="text-gray-300 mb-6">
+            Запишитесь на бесплатную диагностику вашего устройства и получите скидку 15% на ремонт. Свяжитесь с нами через Telegram!
+        </p>
+        <a href="https://t.me/techrevive_bot" target="_blank" class="cta-button">
+            <i class="fab fa-telegram-plane"></i>
+            Связаться через Telegram
+        </a>
+    </div>
+</div>
+
+<section class="py-20 md:py-28 relative overflow-hidden">
+    <svg aria-hidden="true" class="pointer-events-none absolute inset-0 h-full w-full fill-gray-400/20 stroke-gray-600 -z-[1] [mask-image:radial-gradient(900px_circle_at_center,white,transparent)]">
+        <defs>
+            <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse" x="-1" y="-1">
+                <path d="M.5 40V.5H40" fill="none" stroke-dasharray="4 2"></path>
+            </pattern>
+        </defs>
+        <rect width="100%" height="100%" stroke-width="0" fill="url(#grid-pattern)"></rect>
+    </svg>
+    <div class="absolute inset-0">
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] rounded-full bg-primary/10 translate-x-1/3 -translate-y-1/4"></div>
+        <div class="absolute bottom-0 left-0 w-[700px] h-[700px] rounded-full bg-primary/10 -translate-x-1/3 translate-y-1/4"></div>
+    </div>
+    <div class="container mx-auto relative z-10">
+        <div class="max-w-4xl mx-auto text-center px-4">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6">
+                <span class="text-primary">О нашей</span> компании
+            </h1>
+            <p class="text-xl text-gray-300 mb-8">
+                Мы восстанавливаем жизнь вашим устройствам и дарим им вторую жизнь с 2015 года. Технологии могут ломаться, но наше качество — нет.
+            </p>
+            <div class="flex flex-col md:flex-row justify-center gap-4 mt-10">
+                <div class="glass-card px-5 py-3 rounded-lg text-left max-w-sm mx-auto">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-rocket text-primary"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold">Быстрый ремонт</div>
+                            <div class="text-gray-400 text-sm">80% ремонтов за 1-2 часа</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card px-5 py-3 rounded-lg text-left max-w-sm mx-auto">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                            <i class="fas fa-medal text-primary"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold">Гарантия качества</div>
+                            <div class="text-gray-400 text-sm">98% успешных ремонтов</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-16">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold">
+                <span class="text-primary">Наша история</span> роста
+            </h2>
+            <p class="text-gray-400 max-w-2xl mx-auto mt-4">
+                От маленькой мастерской до федеральной сети сервисных центров с инновационным подходом
+            </p>
+        </div>
+        <div class="relative">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {% for history in [
+                    {'year': '2015', 'title': 'Начало пути', 'icon': 'fa-home', 'description': 'Первый сервисный центр открыт в Москве. Всего 2 инженера и одна ремонтная станция.'},
+                    {'year': '2018', 'title': 'Федеральная экспансия', 'icon': 'fa-city', 'description': 'Открыты центры в Санкт-Петербурге, Казани и Екатеринбурге. Собрана команда из 25 профессионалов.'},
+                    {'year': '2023', 'title': 'Лидер отрасли', 'icon': 'fa-ribbon', 'description': '24 сервисных центра по всей России. Премия "Лучший сервис года" по версии IT Expert.'}
+                ] %}
+                    <div class="history-item">
+                        <div class="history-marker">
+                            <div class="w-14 h-14 bg-primary/20 rounded-full flex items-center justify-center">
+                                <div class="w-10 h-10 bg-primary/40 rounded-full flex items-center justify-center text-xl">
+                                    <i class="fas {{ history.icon }}"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6 mt-6">
+                            <div class="text-primary font-bold mb-2">{{ history.year }}</div>
+                            <h3 class="text-xl font-bold mb-3">{{ history.title }}</h3>
+                            <p class="text-gray-400">{{ history.description }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-16 relative">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold">
+                <span class="text-primary">Сервисные центры</span> TechRevive
+            </h2>
+            <p class="text-gray-400 max-w-2xl mx-auto mt-4">
+                Наша география охватывает всю Россию. Найдите ближайший сервисный центр на карте
+            </p>
+        </div>
+        <div class="map-container" id="map"></div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-8">
+            <div class="glass-card p-4 text-center">
+                <div class="text-primary text-xl font-bold">24</div>
+                <div>Сервисных центра</div>
+            </div>
+            <div class="glass-card p-4 text-center">
+                <div class="text-primary text-xl font-bold">350+</div>
+                <div>Инженеров в штате</div>
+            </div>
+            <div class="glass-card p-4 text-center">
+                <div class="text-primary text-xl font-bold">97%</div>
+                <div>Удовлетворённых клиентов</div>
+            </div>
+            <div class="glass-card p-4 text-center">
+                <div class="text-primary text-xl font-bold">24/7</div>
+                <div>Онлайн поддержка</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-16">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold">
+                <span class="text-primary">Наши ценности</span>
+            </h2>
+            <p class="text-gray-400 max-w-2xl mx-auto mt-4">
+                Принципы, по которым мы работаем каждый день
+            </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {% for value in [
+                {'icon': 'fa-shield-alt', 'title': 'Надежность', 'description': 'Каждый ремонт сопровождается официальной гарантией. Мы используем только оригинальные комплектующие и строго соблюдаем сроки.'},
+                {'icon': 'fa-bolt', 'title': 'Скорость', 'description': '80% поломок мы устраняем менее чем за 2 часа благодаря современному оборудованию и квалифицированным специалистам.'},
+                {'icon': 'fa-headset', 'title': 'Поддержка', 'description': 'Наши клиенты получают бесплатные консультации и пожизненную техническую поддержку по отремонтированным устройствам.'}
+            ] %}
+                <div class="company-value-item glass-card p-6 rounded-xl">
+                    <div class="flex items-start mb-4">
+                        <div class="bg-primary/10 p-3 rounded-lg mr-4">
+                            <i class="fas {{ value.icon }} text-primary text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold">{{ value.title }}</h3>
+                    </div>
+                    <p class="text-gray-400">{{ value.description }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="py-16">
+    <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold">
+                <span class="text-primary">Наша команда</span> экспертов
+            </h2>
+            <p class="text-gray-400 max-w-2xl mx-auto mt-4">
+                Профессионалы с опытом от 7 лет в ремонте цифровой техники
+            </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for member in [
+                {'name': 'Михаил Семёнов', 'role': 'Главный инженер', 'experience': '9 лет', 'description': 'Эксперт по восстановлению данных и ремонту материнских плат. Сертифицированный специалист по микроэлектронике.', 'gradient': 'from-primary/20 to-indigo-500/10', 'photo': 'https://p2.zoon.ru/b/5/590b0c3b4cfda33af72adfb9_590b2fac2724b.jpg'},
+                {'name': 'Анна Климова', 'role': 'Lead iOS инженер', 'experience': '7 лет', 'description': 'Специалист по продуктам Apple и Samsung. Эксперт в замене микросхем и восстановлении влагопораженных устройств.', 'gradient': 'from-primary/20 to-purple-500/10', 'photo': 'https://avatars.mds.yandex.net/i?id=855a7a4e7ad2590e47cbe33d7b866b18_l-9293984-images-thumbs&n=13'},
+                {'name': 'Артём Волков', 'role': 'Технолог ремонтов', 'experience': '8 лет', 'description': 'Разработчик внутренних стандартов качества ремонта. Автор 5 учебных программ и методик для инженеров компании.', 'gradient': 'from-primary/20 to-green-500/10', 'photo': 'https://avatars.mds.yandex.net/get-altay/10804279/2a0000018fec3ffb73e22fa0076ae54cb814/diploma'},
+                {'name': 'Елена Петрова', 'role': 'Директор сервиса', 'experience': '10 лет', 'description': 'Руководитель федеральной сети сервисных центров. Эксперт в области управления клиентским опытом.', 'gradient': 'from-primary/20 to-blue-500/10', 'photo': 'https://telegra.ph/file/7f0e5ad39c4ac2d6cedd8.jpg'}
+            ] %}
+                <div class="team-member glass-card rounded-xl overflow-hidden">
+                    <div class="aspect-video bg-gradient-to-r {{ member.gradient }} relative">
+                        <img src="{{ member.photo }}" alt="{{ member.name }}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-5 pt-6 pb-6 relative">
+                        <h3 class="text-xl font-bold text-center">{{ member.name }}</h3>
+                        <p class="text-gray-500 text-center mb-3">{{ member.role }}</p>
+                        <div class="text-center">
+                            <div class="inline-flex items-center bg-gray-800 text-xs rounded-full py-1 px-3">
+                                <span class="w-2 h-2 bg-primary rounded-full mr-2"></span>
+                                Опыт: {{ member.experience }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="team-overlay">
+                        <p class="text-sm text-gray-300">{{ member.description }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="py-16">
+    <div class="container mx-auto px-4">
+        <div class="glass-card p-8 md:p-12 rounded-xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-primary/10 to-transparent -z-10"></div>
+            <div class="cta-section">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                    Готовы восстановить<br>
+                    <span class="text-primary">ваше устройство?</span>
+                </h2>
+                <p class="text-gray-400 mb-6">
+                    Оставьте заявку на бесплатную диагностику прямо сейчас и получите скидку 15% на ремонт
+                </p>
+                <a href="https://t.me/techrevive_bot" target="_blank" class="cta-button">
+                    <i class="fab fa-telegram-plane"></i>
+                    Связаться через Telegram
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Инициализация карты
+    const map = L.map('map').setView([55.751244, 37.618423], 4);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 18,
+    }).addTo(map);
+
+    // Данные о сервисных центрах
+    const serviceCenters = [
+        {
+            name: 'Москва',
+            coords: [55.751244, 37.618423],
+            address: 'Москва, ул. Тверская, д. 15',
+            hours: '9:00 - 21:00 ежедневно',
+            color: 'primary'
+        },
+        {
+            name: 'Санкт-Петербург',
+            coords: [59.934280, 30.335098],
+            address: 'Санкт-Петербург, Невский пр., д. 22',
+            hours: '9:00 - 21:00 ежедневно',
+            color: 'emerald-500'
+        },
+        {
+            name: 'Казань',
+            coords: [55.788740, 49.122140],
+            address: 'Казань, ул. Баумана, д. 51',
+            hours: '9:00 - 21:00 ежедневно',
+            color: 'amber-500'
+        },
+        {
+            name: 'Екатеринбург',
+            coords: [56.838926, 60.605702],
+            address: 'Екатеринбург, ул. Ленина, д. 25',
+            hours: '9:00 - 21:00 ежедневно',
+            color: 'indigo-500'
+        },
+        {
+            name: 'Новосибирск',
+            coords: [55.008353, 82.935733],
+            address: 'Новосибирск, ул. Горская, д. 10',
+            hours: '9:00 - 21:00 ежедневно',
+            color: 'purple-500'
+        }
+    ];
+
+    // Добавление маркеров на карту
+    serviceCenters.forEach(center => {
+        const marker = L.marker(center.coords).addTo(map);
+        marker.bindPopup(`
+            <b>${center.name}</b><br>
+            ${center.address}<br>
+            <i class="fas fa-clock"></i> ${center.hours}<br>
+            <button class="bg-primary text-black text-sm font-semibold py-1 px-3 rounded-lg mt-2">Записаться онлайн</button>
+        `);
+    });
+
+    // Интерактивность карточек команды
+    document.querySelectorAll('.team-member').forEach(member => {
+        member.addEventListener('mouseenter', function() {
+            this.classList.add('transform');
+        });
+        
+        member.addEventListener('mouseleave', function() {
+            this.classList.remove('transform');
+        });
+    });
+
+    // Анимация при скролле для истории
+    const historyItems = document.querySelectorAll('.history-item');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-fadeInUp');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+
+    historyItems.forEach(item => {
+        observer.observe(item);
+    });
+
+    // Управление модальным окном
+    const modal = document.getElementById('appointmentModal');
+    const openModalBtn = document.querySelector('.open-modal-btn');
+    const closeModalBtn = document.querySelector('.modal-close');
+
+    openModalBtn.addEventListener('click', () => {
+        modal.style.display = 'flex';
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
